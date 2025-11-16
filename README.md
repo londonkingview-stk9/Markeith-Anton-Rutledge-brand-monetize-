@@ -287,78 +287,230 @@ app.get('/v1/admin/key/:key', requireAdmin, (req,res)=>{
   if (!acct) return res.status(404).json({ ok:false, error:'unknown_key' });
   res.json({ ok:true, key: req.params.key, account: acct });
 });
+// Rutledge Name Monetization – DroidScript Client
+// Uses $20/sec sessions against your backend
 
-// ---- Start ----
-app.listen(PORT, ()=> console.log(`Name monetization server on http://localhost:${PORT}`));// DroidScript demo client for the name-monetization backend
-var API_BASE = "https://Markeith-Rutledge-URL";
-var edtKey, edtQuery, txt, sessionId=null, hbTimer=null;
+// 1) AFTER DEPLOY, set this to your live backend URL:
+var API_BASE = "https://Markeith Rutledge";  // <-- change this
 
-function OnStart(){
-  var lay = app.CreateLayout("linear","VCenter,FillXY");
+var edtKey, edtQuery, txtStatus;
+var sessionId = null;
+var hbTimer = null;
 
-  edtKey = app.CreateTextEdit("",0.92); edtKey.SetHint("API Key"); lay.AddChild(edtKey);
-  edtQuery = app.CreateTextEdit("Markeith  Anton   Rutledge",0.92); lay.AddChild(edtQuery);
+// ----------------- MAIN ENTRY -----------------
+function OnStart() {
+    var lay = app.CreateLayout("linear", "VCenter,FillXY");
 
-  var row = app.CreateLayout("linear","Horizontal,FillX");
-  var bStart = app.CreateButton("Start Session",0.45,-1);
-  var bStop  = app.CreateButton("Stop Session",0.45,-1);
-  row.AddChild(bStart); row.AddChild(bStop); lay.AddChild(row);
+    // API key input
+    edtKey = app.CreateTextEdit("", 0.92);
+    edtKey.SetHint("API Key");
+    lay.AddChild(edtKey);
 
-  var bFetch = app.CreateButton("Get Brand Content",0.92,-1); lay.AddChild(bFetch);
+    // Query input (any form of your name or the digits)
+    edtQuery = app.CreateTextEdit("Markeith  Anton   Rutledge", 0.92);
+    lay.AddChild(edtQuery);
 
-  txt = app.CreateText("",0.92,0.6,"Multiline,FillX"); lay.AddChild(txt);
+    // Buttons row
+    var row = app.CreateLayout("linear", "Horizontal,FillX");
+    var btnStart = app.CreateButton("Start Session", 0.45, -1);
+    var btnStop  = app.CreateButton("Stop Session", 0.45, -1);
+    row.AddChild(btnStart);
+    row.AddChild(btnStop);
+    lay.AddChild(row);
 
-  app.AddLayout(lay);
-  bStart.SetOnTouch(startSession);
-  bStop.SetOnTouch(stopSession);
-  bFetch.SetOnTouch(fetchBrand);
+    // Brand content button
+    var btnFetch = app.CreateButton("Get Brand Content", 0.92, -1);
+    lay.AddChild(btnFetch);
+
+    // Status text
+    txtStatus = app.CreateText("", 0.92, 0.6, "Multiline,FillX");
+    lay.AddChild(txtStatus);
+
+    app.AddLayout(lay);
+
+    // Handlers
+    btnStart.SetOnTouch(startSession);
+    btnStop.SetOnTouch(stopSession);
+    btnFetch.SetOnTouch(fetchBrand);
 }
 
-function set(s){ txt.SetText(s); }
-function http(m,p,b,h,cb){
-  var x=new XMLHttpRequest(); x.open(m,API_BASE+p,true);
-  x.setRequestHeader("Content-Type","application/json");
-  if (h) for (var k in h) x.setRequestHeader(k,h[k]);
-  x.onreadystatechange=function(){
-    if (x.readyState===4){ try{ cb(null,JSON.parse(x.responseText),x.status);}catch(e){cb(e);} }
-  };
-  x.onerror=function(){ cb(new Error("network_error")); };
-  x.send(b?JSON.stringify(b):null);
+// ----------------- HELPERS -----------------
+function setStatus(msg) {
+    txtStatus.SetText(msg);
 }
 
-function startSession(){
-  var key=edtKey.GetText().trim(); if(!key) return set("Enter key.");
-  var q=edtQuery.GetText().trim();
-  http("POST","/v1/billing/session/start",{ q:q },{ "x-api-key": key },function(e,r,s){
-    if(e||!r||!r.ok) return set("Start error.");
-    sessionId=r.session_id; set("Session started @ $"+r.rate_per_sec+"/sec\nID="+sessionId);
-    if(hbTimer) clearInterval(hbTimer);
-    hbTimer=setInterval(function(){
-      http("POST","/v1/billing/session/heartbeat",{ session_id: sessionId },{ "x-api-key": key },function(err,res,st){
-        if(err||!res||!res.ok) return;
-        set("Billed "+res.billed_sec.toFixed(2)+"s • Total "+res.total_sec.toFixed(2)+"s • Balance $"+res.balance.toFixed(2));
-      });
-    },3000);
-  });
+function http(method, path, body, headers, callback) {
+    var x = new XMLHttpRequest();
+    x.open(method, API_BASE + path, true);
+    x.setRequestHeader("Content-Type", "application/json");
+    if (headers) {
+        for (var k in headers) {
+            x.setRequestHeader(k, headers[k]);
+        }
+    }
+    x.onreadystatechange = function () {
+        if (x.readyState === 4) {
+            try {
+                var data = JSON.parse(x.responseText);
+                callback(null, data, x.status);
+            } catch (e) {
+                callback(e, null, x.status);
+            }
+        }
+    };
+    x.onerror = function () {
+        callback(new Error("network_error"), null, 0);
+    };
+    x.send(body ? JSON.stringify(body) : null);
 }
 
-function stopSession(){
-  var key=edtKey.GetText().trim(); if(!key||!sessionId) return set("No session.");
-  if(hbTimer){ clearInterval(hbTimer); hbTimer=null; }
-  http("POST","/v1/billing/session/stop",{ session_id: sessionId },{ "x-api-key": key },function(e,r,s){
-    if(e||!r||!r.ok) return set("Stop error.");
-    set("Stopped. Total "+r.total_sec.toFixed(2)+"s • Final $"+r.final_balance.toFixed(2));
-    sessionId=null;
-  });
+// ----------------- SESSION START -----------------
+function startSession() {
+    var key = edtKey.GetText().trim();
+    if (!key) {
+        setStatus("Enter key.");
+        return;
+    }
+
+    var q = edtQuery.GetText().trim();
+
+    http(
+        "POST",
+        "/v1/billing/session/start",
+        { q: q },
+        { "x-api-key": key },
+        function (e, r, s) {
+            if (e || !r || !r.ok) {
+                setStatus("Start error.");
+                return;
+            }
+
+            sessionId = r.session_id;
+
+            setStatus(
+                "Session started @ $" +
+                    r.rate_per_sec +
+                    "/sec\nID=" +
+                    sessionId
+            );
+
+            // Clear old timer if any
+            if (hbTimer) {
+                clearInterval(hbTimer);
+                hbTimer = null;
+            }
+
+            // Heartbeat every 3 seconds to bill time
+            hbTimer = setInterval(function () {
+                http(
+                    "POST",
+                    "/v1/billing/session/heartbeat",
+                    { session_id: sessionId },
+                    { "x-api-key": key },
+                    function (err, res, st) {
+                        if (err || !res || !res.ok) {
+                            // silently ignore to avoid spam
+                            return;
+                        }
+                        setStatus(
+                            "Billed " +
+                                res.billed_sec.toFixed(2) +
+                                "s • Total " +
+                                res.total_sec.toFixed(2) +
+                                "s • Balance $" +
+                                res.balance.toFixed(2)
+                        );
+                    }
+                );
+            }, 3000);
+        }
+    );
 }
 
-function fetchBrand(){
-  var key=edtKey.GetText().trim(); var q=edtQuery.GetText().trim();
-  if(!key) return set("Enter key."); if(!sessionId) return set("Start a session first.");
-  http("GET","/v1/brand/content?q="+encodeURIComponent(q),null,{ "x-api-key": key, "x-session-id": sessionId },function(e,r,s){
-    if(s===428) return set("Start a session first.");
-    if(s===402) return set("Payment required. Balance due.");
-    if(e||!r||!r.ok) return set("Brand fetch error.");
-    set("Authorized brand content • Session "+r.session.total_sec.toFixed(2)+"s • Rate $"+r.session.rate+"/sec");
-  });
+// ----------------- SESSION STOP -----------------
+function stopSession() {
+    var key = edtKey.GetText().trim();
+    if (!key) {
+        setStatus("Enter key.");
+        return;
+    }
+    if (!sessionId) {
+        setStatus("No active session.");
+        return;
+    }
+
+    if (hbTimer) {
+        clearInterval(hbTimer);
+        hbTimer = null;
+    }
+
+    http(
+        "POST",
+        "/v1/billing/session/stop",
+        { session_id: sessionId },
+        { "x-api-key": key },
+        function (e, r, s) {
+            if (e || !r || !r.ok) {
+                setStatus("Stop error.");
+                return;
+            }
+            setStatus(
+                "Session stopped.\nTotal " +
+                    r.total_sec.toFixed(2) +
+                    "s • Final $" +
+                    r.final_balance.toFixed(2)
+            );
+            sessionId = null;
+        }
+    );
+}
+
+// ----------------- BRAND CONTENT FETCH -----------------
+function fetchBrand() {
+    var key = edtKey.GetText().trim();
+    var q = edtQuery.GetText().trim();
+
+    if (!key) {
+        setStatus("Enter key.");
+        return;
+    }
+    if (!sessionId) {
+        setStatus("Start a session first.");
+        return;
+    }
+
+    http(
+        "GET",
+        "/v1/brand/content?q=" + encodeURIComponent(q),
+        null,
+        {
+            "x-api-key": key,
+            "x-session-id": sessionId
+        },
+        function (e, r, s) {
+            if (s === 428) {
+                setStatus("Start a session first.");
+                return;
+            }
+            if (s === 402) {
+                setStatus("Payment required. Balance due.");
+                return;
+            }
+            if (e || !r || !r.ok) {
+                setStatus("Brand fetch error.");
+                return;
+            }
+
+            setStatus(
+                "Authorized brand content\n" +
+                    "Brand: " +
+                    r.brand +
+                    "\nSession: " +
+                    r.session.total_sec.toFixed(2) +
+                    "s @ $" +
+                    r.session.rate +
+                    "/sec"
+            );
+        }
+    );
 }
