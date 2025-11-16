@@ -290,7 +290,7 @@ app.get('/v1/admin/key/:key', requireAdmin, (req,res)=>{
 
 // ---- Start ----
 app.listen(PORT, ()=> console.log(`Name monetization server on http://localhost:${PORT}`));// DroidScript demo client for the name-monetization backend
-var API_BASE = "https://YOUR-LIVE-URL"; // <-- replace after deploy (Step 4)
+var API_BASE = "https://Markeith-Rutledge-URL"; // <--
 var edtKey, edtQuery, txt, sessionId=null, hbTimer=null;
 
 function OnStart(){
