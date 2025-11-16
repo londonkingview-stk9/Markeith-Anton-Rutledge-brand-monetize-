@@ -291,7 +291,7 @@ app.get('/v1/admin/key/:key', requireAdmin, (req,res)=>{
 // Uses $20/sec sessions against your backend
 
 // 1) AFTER DEPLOY, set this to your live backend URL:
-var API_BASE = "https://Markeith Rutledge";  // <-- change this
+var API_BASE = "https://MarkeithRutledge";  // <-- change this
 
 var edtKey, edtQuery, txtStatus;
 var sessionId = null;
