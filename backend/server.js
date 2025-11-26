@@ -20,7 +20,8 @@ const ALLOW_IPS = (process.env.ALLOW_IPS || "")
   .filter(Boolean);
 const BILLING_RATE_PER_SEC = Number(process.env.BILLING_RATE_PER_SEC || 20);
 const SESSION_MAX_IDLE_SEC = Number(process.env.SESSION_MAX_IDLE_SEC || 15);
-
+const CASHAPP_TAG = process.env.CASHAPP_TAG || "";
+const CASHAPP_NOTE_PREFIX = process.env.CASHAPP_NOTE_PREFIX || "Name monetization session ";
 app.set("trust proxy", true);
 app.use(
   cors({
