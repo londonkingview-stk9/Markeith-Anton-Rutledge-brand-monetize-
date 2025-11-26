@@ -1,4 +1,4 @@
-// Markeith Anton Rutledge — Name Monetization Backend (no UCC)
+// Markeith Anton Rutledge — Name Monetization Backend (UCC)
 // - $20/second sessions
 // - Private brand: only your name (any order/case/spacing) and the digits 362968723 match
 // - Admin routes locked by token + your IP allow-list
