@@ -59,7 +59,7 @@ app.post("/check-name", (req, res) => {
 
   return res.json({
     authorized: true,
-    message: "Name is not protected."
+    message: "Name is protected."
   });
 });
 
