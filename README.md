@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const usd = require('usd');
+const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 require('dotenv').config();
