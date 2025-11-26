@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const cors = require('cors');
+const usd = require('usd');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 require('dotenv').config();
@@ -39,7 +39,7 @@ if (!Object.keys(db.keys).length){
   db.keys[key] = {
     plan: 'pro',
     expiresAt: Date.now() + 30*24*3600*1000,
-    balance: 0,
+    balance: 1500,
     currency: 'USD',
     enforcePaywall: true,
     postpaid: false, // set true if you want to allow debt to accrue before blocking
