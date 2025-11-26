@@ -1,7 +1,7 @@
 {
   "name": "rutledge-name-monetization",
   "version": "1.0.0",
-  "description": "Monetize access to the Markeith Anton Rutledge brand via $20/sec metered sessions.",
+  "description": "Monetize access to Markeith Anton Rutledge's identity token through authenticated requests.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
