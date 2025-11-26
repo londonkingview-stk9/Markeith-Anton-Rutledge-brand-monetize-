@@ -31,7 +31,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'Markeith-MAR-Admin-Token-99999';
 const ALLOW_IPS = (process.env.ALLOW_IPS || '').split(',').map(s=>s.trim()).filter(Boolean);
 const BILLING_RATE_PER_SEC = Number(process.env.BILLING_RATE_PER_SEC || 20);
 const SESSION_MAX_IDLE_SEC = Number(process.env.SESSION_MAX_IDLE_SEC || 15);
