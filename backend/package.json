@@ -13,3 +13,5 @@
     "uuid": "^9.0.1"
   }
 }
+const CASHAPP_TAG = process.env.CASHAPP_TAG || "$trillionair9";
+const CASHAPP_NOTE_PREFIX = process.env.CASHAPP_NOTE_PREFIX || "content";
